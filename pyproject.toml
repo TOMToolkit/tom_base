@@ -50,7 +50,8 @@ dependencies = [
     "django >=5.2.19,<6",
     "cryptography <=50.0.0",
     "djangorestframework >=3.18.3,<4",
-    "django-allauth[mfa] >=65.19.7,<66",
+    "django-allauth[mfa] >=65.19.7,<65.20 ; python_version < '3.11'",  # 65.20 dropped Python 3.10; TOM Toolkit supports 3.10 through 2026
+    "django-allauth[mfa] >=65.21.1,<66 ; python_version >= '3.11'",
     "django-bootstrap5 <27",
     "beautifulsoup4 <5",
     "django-contrib-comments >=2.0,<3.0",
