@@ -329,9 +329,13 @@ We will start by creating our query:
 ================================================
 
 To create the ``ReducedDatum`` we will need a ``create_reduced_datums_from_query()`` method. This should take all of the data
-types and convert them into ``ReducedDatum`` objects. Be sure to use ``XXXXXReducedDatum.objects.get_or_create()`` to prevent
-re-creating existing objects where "XXXXX" represents the specific model you wish to use (such as Photometry, Spectroscopy, or Astrometry.)
-Details for the different types of data models can be found in the :doc:`API documentation <../api/tom_dataproducts/models>`.
+types and convert them into ``ReducedDatum`` objects. Special care needs to be taken to prevent re-creating duplicate datums
+each time a service is accessed. In this example, we will use ``XXXXXReducedDatum.objects.get_or_create()`` where "XXXXX" represents
+the specific model you wish to use (such as Photometry, Spectroscopy, or Astrometry.) For details that are not be considered
+an update to the datum, like `source`, we use the `default` keyword to prevent that parameter from being used in the search.
+We also catch the validation error if there are updated values that aren't checked by the uniqueness constraints.
+Details for the different types of data models and their uniqueness constraints can be found in the
+:doc:`API documentation <../api/tom_dataproducts/models>`.
 
 .. code-block:: python
     :caption: my_dataservice.MyDataService
@@ -354,15 +358,20 @@ Details for the different types of data models can be found in the :doc:`API doc
                 # We might have some specific things we want to include based on type.
                 # For Photometry, for example, we need a magnitude, error, and filter to be displayed in the
                 # photometry plot on the target detail page.
-                reduced_datum, __ = PhotometryReducedDatum.objects.get_or_create(
-                    target=target,
-                    timestamp=Time(datum['time'], format='iso', scale='utc').datetime,
-                    source_name=self.name,
-                    brightness=datum['my_mag'],
-                    brightness_error=datum['my_magerr'],
-                    limit=datum['my_maglim'],
-                    bandpass=datum['my_passband']
-                )
+                try
+                    reduced_datum, __ = PhotometryReducedDatum.objects.get_or_create(
+                        target=target,
+                        timestamp=Time(datum['time'], format='iso', scale='utc').datetime,
+                        brightness=datum['my_mag'],
+                        brightness_error=datum['my_magerr'],
+                        limit=datum['my_maglim'],
+                        bandpass=datum['my_passband'],
+                        defaults={'source_name': self.name,}
+                    )
+                except ValidationError as e:
+                    # Instead of raising an error, you could increment a `reduction_version` or update the datum.
+                    raise QueryServiceError(f"Error: Identical data exists with a different `brightness_error`."
+                                            f"(target:{target} data:{detection}) -- {e}")
                 reduced_datums.append(reduced_datum)
         return reduced_datums
 

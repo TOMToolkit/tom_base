@@ -1,19 +1,7 @@
 from tom_base.settings import *  # noqa
 
-DATABASES = {
-   'default': {
-       'ENGINE': 'django.db.backends.postgresql',
-       'NAME': 'tom',
-       'USER': 'postgres',
-       'PASSWORD': 'postgres',
-       'HOST': '127.0.0.1',
-       'PORT': 5432
-   }
-}
+# Speed up password hashing for tests only, NEVER use this in production!
+PASSWORD_HASHERS = ['django.contrib.auth.hashers.MD5PasswordHasher']
 
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
-        'LOCATION': 'unique-snowflake'
-    }
-}
+# Per-process cache, so tests running under --parallel don't share the file-based cache in /tmp
+CACHES = {'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}}

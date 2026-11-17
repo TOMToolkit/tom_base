@@ -37,4 +37,5 @@ class TomDataservicesConfig(AppConfig):
             {'class': f'{self.name}.data_services.alerce.AlerceDataService'},
             {'class': f'{self.name}.data_services.ned.NEDDataService'},
             {'class': f'{self.name}.data_services.mpc.MPCExplorerDataService'},
+            {'class': f'{self.name}.data_services.babamul.BabamulDataService'},
         ]
