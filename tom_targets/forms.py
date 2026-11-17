@@ -51,7 +51,7 @@ class CoordinateField(forms.CharField):
                     a = Angle(value, unit=u.hourangle)
                 else:
                     a = Angle(value, unit=u.degree)
-                return a.to(u.degree).value
+                return float(a.to(u.degree).value)
             except Exception:
                 raise ValidationError('Invalid format. Please use sexigesimal or degrees')
 
