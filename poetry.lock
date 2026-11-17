@@ -736,12 +736,6 @@ description = "Python library for calculating contours of 2D quadrilateral grids
 optional = false
 python-versions = ">=3.11"
 groups = ["main", "docs"]
-<<<<<<< HEAD
-markers = "python_version >= \"3.11\""
-||||||| parent of fb863134 (Drop python 3.10, add 3.14)
-markers = "python_version == \"3.11\""
-=======
->>>>>>> fb863134 (Drop python 3.10, add 3.14)
 files = [
     {file = "contourpy-1.3.3-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:709a48ef9a690e1343202916450bc48b9e51c049b089c7f79a267b46cffcdaa1"},
     {file = "contourpy-1.3.3-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:23416f38bfd74d5d28ab8429cc4d63fa67d5068bd711a85edb1c3fb0c3e2f381"},
@@ -1098,41 +1092,11 @@ bcrypt = ["bcrypt"]
 
 [[package]]
 name = "django-allauth"
-version = "65.19.7"
-description = "Integrated set of Django applications addressing authentication, registration, account management as well as 3rd party (social) account authentication."
-optional = false
-python-versions = ">=3.10"
-groups = ["main"]
-markers = "python_version < \"3.11\""
-files = [
-    {file = "django_allauth-65.19.7-py3-none-any.whl", hash = "sha256:8899377f38afabf10445c9ee2f808a730304ca8aecc540657d51a8b3928283d6"},
-    {file = "django_allauth-65.19.7.tar.gz", hash = "sha256:c7749551b659ca954e483f6f634cd0c262d65dd8144f5219b3a31cba0426e981"},
-]
-
-[package.dependencies]
-asgiref = ">=3.8.1"
-Django = ">=4.2.16"
-fido2 = {version = ">=1.1.2,<3", optional = true, markers = "extra == \"mfa\""}
-qrcode = {version = ">=7.0.0,<9", optional = true, markers = "extra == \"mfa\""}
-
-[package.extras]
-headless = ["pyjwt[crypto] (>=2.0,<3)"]
-headless-spec = ["PyYAML (>=6,<7)"]
-idp-oidc = ["oauthlib (>=4.0.0,<5)", "pyjwt[crypto] (>=2.0,<3)"]
-mfa = ["fido2 (>=1.1.2,<3)", "qrcode (>=7.0.0,<9)"]
-openid = ["python3-openid (>=3.0.8,<4)"]
-saml = ["python3-saml (>=1.15.0,<2.0.0)"]
-socialaccount = ["oauthlib (>=4.0.0,<5)", "pyjwt[crypto] (>=2.0,<3)", "requests (>=2.0.0,<3)"]
-steam = ["python3-openid (>=3.0.8,<4)"]
-
-[[package]]
-name = "django-allauth"
 version = "65.22.1"
 description = "Integrated set of Django applications addressing authentication, registration, account management as well as 3rd party (social) account authentication."
 optional = false
 python-versions = ">=3.11"
 groups = ["main"]
-markers = "python_version >= \"3.11\""
 files = [
     {file = "django_allauth-65.22.1-py3-none-any.whl", hash = "sha256:08f7a3ddbd5ff7f1000d685dee9c0678d0da2057e18bed473a6eb2de18bd04e4"},
     {file = "django_allauth-65.22.1.tar.gz", hash = "sha256:b05e20b8f511066c97ed98491520a2ca0319ef16d7f27feed9f688cc6877a8ba"},
@@ -2832,13 +2796,7 @@ description = "Cross-platform lib for process and system monitoring."
 optional = false
 python-versions = ">=3.6"
 groups = ["main"]
-<<<<<<< HEAD
-markers = "python_version >= \"3.11\" and sys_platform != \"emscripten\" and sys_platform != \"cygwin\""
-||||||| parent of fb863134 (Drop python 3.10, add 3.14)
-markers = "sys_platform != \"emscripten\" and sys_platform != \"cygwin\" and python_version >= \"3.11\""
-=======
 markers = "sys_platform != \"emscripten\" and sys_platform != \"cygwin\""
->>>>>>> fb863134 (Drop python 3.10, add 3.14)
 files = [
     {file = "psutil-7.2.2-cp313-cp313t-macosx_10_13_x86_64.whl", hash = "sha256:2edccc433cbfa046b980b0df0171cd25bcaeb3a68fe9022db0979e7aa74a826b"},
     {file = "psutil-7.2.2-cp313-cp313t-macosx_11_0_arm64.whl", hash = "sha256:e78c8603dcd9a04c7364f1a3e670cea95d51ee865e4efb3556a3a63adef958ea"},
@@ -3343,12 +3301,6 @@ description = "Fundamental algorithms for scientific computing in Python"
 optional = false
 python-versions = ">=3.11"
 groups = ["main"]
-<<<<<<< HEAD
-markers = "python_version >= \"3.11\""
-||||||| parent of fb863134 (Drop python 3.10, add 3.14)
-markers = "python_version == \"3.11\""
-=======
->>>>>>> fb863134 (Drop python 3.10, add 3.14)
 files = [
     {file = "scipy-1.17.1-cp311-cp311-macosx_10_14_x86_64.whl", hash = "sha256:1f95b894f13729334fb990162e911c9e5dc1ab390c58aa6cbecb389c5b5e28ec"},
     {file = "scipy-1.17.1-cp311-cp311-macosx_12_0_arm64.whl", hash = "sha256:e18f12c6b0bc5a592ed23d3f7b891f68fd7f8241d69b7883769eb5d5dfb52696"},
@@ -3860,13 +3812,7 @@ files = [
     {file = "tzdata-2026.4-py2.py3-none-any.whl", hash = "sha256:c2169a8b0a7a5e9674da5a135ccdfb2b3e671b333ed9fed17b41f73c34476e81"},
     {file = "tzdata-2026.4.tar.gz", hash = "sha256:f1b8bd365d8d210c55353f4d7f8d6d8561c0ba50d704b700d195a9424bba0d79"},
 ]
-<<<<<<< HEAD
-markers = {main = "sys_platform == \"win32\" or sys_platform == \"emscripten\" or python_version < \"3.11\"", test = "platform_system == \"Windows\""}
-||||||| parent of fb863134 (Drop python 3.10, add 3.14)
-markers = {main = "python_version < \"3.11\" or sys_platform == \"win32\" or sys_platform == \"emscripten\"", test = "platform_system == \"Windows\""}
-=======
 markers = {main = "sys_platform == \"win32\" or sys_platform == \"emscripten\"", test = "platform_system == \"Windows\""}
->>>>>>> fb863134 (Drop python 3.10, add 3.14)
 
 [[package]]
 name = "urllib3"
@@ -3956,19 +3902,5 @@ type = ["pytest-mypy (>=1.0.1) ; platform_python_implementation != \"PyPy\""]
 
 [metadata]
 lock-version = "2.1"
-<<<<<<< HEAD
-python-versions = ">=3.10.0,<3.14"
-content-hash = "e3defa075104671c7f93e945c2f5eb9271294191857cc888e97f5c5efa252d4e"
-||||||| parent of fb863134 (Drop python 3.10, add 3.14)
-python-versions = ">=3.10.0,<3.14"
-content-hash = "7bbdb5e25802bf3629493e8aa5a32217994044a3ae4bd9142ec417d37106cf73"
-=======
 python-versions = ">=3.11,<3.15"
-<<<<<<< HEAD
-content-hash = "ec6069ddd599d1c2c140b59a223da8dbe9d818f02811bda1ddd542f9d938c4d6"
->>>>>>> fb863134 (Drop python 3.10, add 3.14)
-||||||| parent of dd1713a (Update astropy to 7.2)
-content-hash = "ec6069ddd599d1c2c140b59a223da8dbe9d818f02811bda1ddd542f9d938c4d6"
-=======
-content-hash = "dfcf17f937ce27cb34107b473bd681466505750ef95d8903155f5876fa398a61"
->>>>>>> dd1713a (Update astropy to 7.2)
+content-hash = "e23905d5a04d52b98526ab382f61006b382662831852169bf78efbae0236d592"
