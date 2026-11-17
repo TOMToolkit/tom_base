@@ -1,4 +1,6 @@
 from datetime import datetime, timedelta, timezone
+from unittest import addModuleCleanup
+from unittest.mock import patch
 
 from django.contrib.auth.models import User
 from django.test import TestCase
@@ -8,8 +10,19 @@ from tom_targets.models import TargetList
 
 from .models import CalendarEvent
 from .utils import BOOTSTRAP_COLORS, target_list_color
+from .views import MoonPhase
 
 UTC = timezone.utc
+
+
+def setUpModule():
+    # Don't actually perform moon phase calculations
+    moon_phase_patch = patch(
+        'tom_calendar.views.MoonPhase.from_date',
+        return_value=MoonPhase(illumination=0.5, emoji='🌓'),
+    )
+    addModuleCleanup(moon_phase_patch.stop)
+    moon_phase_patch.start()
 
 
 def make_event(title='Test Event', start=None, end=None, **kwargs):

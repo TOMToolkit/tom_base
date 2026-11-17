@@ -123,12 +123,12 @@ have automated release notification to a dedicated #releases slack channel).
 * point a browser to `index.html` in your `htmlcov` directory
 
 ### Run tests
-* `./manage.py test --exclude-tag=canary` to run non-canary tests
+* `./manage.py test --exclude-tag=canary --parallel --settings=test_settings` to run non-canary tests
 
 * Examples for running specific tests or test suites:
-  * `./manage.py test tom_targets.tests`
-  * `./manage.py test tom_targets.tests.tests.TestTargetDetail`
-  * `./manage.py test tom_targets.tests.tests.TestTargetDetail.test_sidereal_target_detail`
+  * `./manage.py test tom_targets.tests --parallel --settings=test_settings`
+  * `./manage.py test tom_targets.tests.tests.TestTargetDetail --parallel --settings=test_settings`
+  * `./manage.py test tom_targets.tests.tests.TestTargetDetail.test_sidereal_target_detail --parallel --settings=test_settings`
 
 
 ## Project Information
