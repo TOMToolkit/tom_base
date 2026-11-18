@@ -49,6 +49,8 @@ class ResumeCadenceAfterFailureStrategy(CadenceStrategy):
         # Boilerplate to get necessary properties for future calls
         start_keyword, end_keyword = facility.get_start_end_keywords()
         observation_payload = last_obs.parameters
+        observation_payload['last_obs_end'] = last_obs.scheduled_end
+        observation_payload['last_obs_start'] = last_obs.scheduled_start
 
         # Cadence logic
         # If the observation hasn't finished, do nothing
@@ -105,7 +107,14 @@ class ResumeCadenceAfterFailureStrategy(CadenceStrategy):
         advance_window_hours = cadence_frequency
         window_length = parse(observation_payload[end_keyword]) - parse(observation_payload[start_keyword])
 
-        new_start = parse(observation_payload[start_keyword]) + timedelta(hours=advance_window_hours)
+        # If the last observation has an end or start time recorded use that for the beginning of the new cadence
+        # Otherwise use the start time of the current cadence.
+        if observation_payload['last_obs_end']:
+            new_start = observation_payload['last_obs_end'] + timedelta(hours=advance_window_hours)
+        elif observation_payload['last_obs_start']:
+            new_start = observation_payload['last_obs_start'] + timedelta(hours=advance_window_hours)
+        else:
+            new_start = parse(observation_payload[start_keyword]) + timedelta(hours=advance_window_hours)
         if new_start < datetime.now():  # Ensure that the new window isn't in the past
             new_start = datetime.now()
         new_end = new_start + window_length
