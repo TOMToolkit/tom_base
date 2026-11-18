@@ -223,7 +223,8 @@ def download_data(form_data, selected_data):
     The "title" becomes the filename, and the "message" becomes a comment at the top of the file.
     :param form_data: data from the DataShareForm
     :param selected_data: ReducucedDatums selected via the checkboxes in the DataShareForm
-    :return: CSV photometry or spectroscopy table as a StreamingHttpResponse
+    :return: CSV photometry or spectroscopy table as a StreamingHttpResponse, or None when
+             selected_data matches no photometry and there is nothing to write
     """
     # TODO: selected_data can only contain photometry PKs as of now. the share-box checkboxes are
     # only rendered in photometry_datalist_for_target.html.
@@ -243,6 +244,11 @@ def download_data(form_data, selected_data):
             'unit': datum.unit,
             'source_name': datum.source_name,
         })
+    # An empty selection would build a Table with no columns at all, so sorting it by timestamp
+    # raises rather than producing an empty file. The caller reports this to the user.
+    if not data_to_save:
+        return None
+
     table = Table(data_to_save)
     if form_data.get('share_message'):
         table.meta['comments'] = [form_data['share_message']]
