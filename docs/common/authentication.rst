@@ -122,6 +122,10 @@ the TOM until 2FA enabled. When ``TOM_MFA_REQUIRED = 'all'``, ``'all'`` means ev
 When ``TOM_MFA_REQUIRED`` is set, users cannot disable their authenticator app (but an administrator can still
 reset it).
 
+Pages that change security settings (enabling or disabling 2FA, viewing recovery codes and, under
+``TOM_API_TOKEN_REQUIRES_MFA``, regenerating an API token) ask the user to re-enter their password first, even
+immediately after logging in. This (apparently having to login twice) is django-allauth's intended behavior.
+
 Other django-allauth MFA settings (``MFA_SUPPORTED_TYPES``, ``MFA_TOTP_TOLERANCE``, ``MFA_RECOVERY_CODE_COUNT`` …)
 can be set in ``settings.py``; see `MFA configuration <https://docs.allauth.org/en/latest/mfa/configuration.html>`_.
 TOM Toolkit enables TOTP and recovery codes; passkeys/WebAuthn are not enabled (contact us if you need this).
