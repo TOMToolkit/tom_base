@@ -15,7 +15,13 @@
     {% for result in results %}
     <tr>
         <td><input type="checkbox" name="selected_results" value="{{ result.id }}"/></td>
-        <td>{{ result.oid}}</td>
+        <td>
+            {% if result.alerce_url %}
+                <a href="{{ result.alerce_url }}" target="_blank" rel="noopener" title="View in the ALeRCE Explorer">{{ result.oid }}</a>
+            {% else %}
+                {{ result.oid }}
+            {% endif %}
+        </td>
         <td>{{ result.ndet}}</td>
         <td>{{ result.meanra }}</td>
         <td>{{ result.meandec }}</td>
