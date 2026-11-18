@@ -1,8 +1,13 @@
 import logging
+import time
+import requests
 from copy import deepcopy
+from urllib.parse import urlparse
 
 from django.conf import settings
+from django.utils import timezone
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.core.files.base import ContentFile
 from django.http import Http404
 from django_filters import rest_framework as drf_filters
 from django.db import IntegrityError
@@ -14,16 +19,17 @@ from rest_framework.mixins import CreateModelMixin, DestroyModelMixin, ListModel
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
+from rest_framework.views import APIView
 
 from tom_common.hooks import run_hook
 from tom_dataproducts.data_processor import run_data_processor
+from tom_dataproducts.exceptions import InvalidFileFormatException
 from tom_dataproducts.filters import DataProductFilter, ReducedDatumFilter
 from tom_dataproducts.models import (DataProduct, ReducedDatum, PhotometryReducedDatum,
                                      SpectroscopyReducedDatum, AstrometryReducedDatum,
                                      REDUCED_DATUM_MODELS, try_parse_reduced_datum)
-from tom_dataproducts.serializers import DataProductSerializer, ReducedDatumSerializer
+from tom_dataproducts.serializers import DataProductSerializer, ReducedDatumSerializer, IncomingAtlasDataSerializer
 from tom_targets.models import Target
-
 
 logger = logging.getLogger(__name__)
 
@@ -245,3 +251,85 @@ class ReducedDatumViewSet(CreateModelMixin, DestroyModelMixin, ListModelMixin, G
             payload['message'] = 'Data already exists. Skipping upload.'
             payload['already_exists'] = True
             return Response(payload, status=status.HTTP_200_OK)
+
+
+class ATLASProcessorView(APIView):
+    authentication_classes = []
+    permission_classes = []
+
+    def post(self, request):
+        serializer = IncomingAtlasDataSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        data = serializer.validated_data
+        if not data["success"]:
+            logger.error(f"ATLAS FP failed with {data.get('error_msg')}")
+            return Response({"status": "error", "detail": data.get("error_msg")}, status=status.HTTP_400_BAD_REQUEST)
+
+        # the target pk is added to the callback url as a query string when the job is queued (see tasks.py)
+        try:
+            target = Target.objects.get(pk=int(request.query_params.get("target_id")))
+        except (TypeError, ValueError):
+            logger.error("ATLAS callback is missing a valid target_id query parameter")
+            return Response({"status": "error", "detail": "Missing or invalid target_id query parameter"},
+                            status=status.HTTP_400_BAD_REQUEST)
+        except Target.DoesNotExist:
+            logger.error(f"ATLAS callback target_id {request.query_params.get('target_id')} does not exist")
+            return Response({"status": "error", "detail": "Target not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        if not self.process_atlas_fp_results(data["task_url"], target, "atlas_photometry"):
+            return Response({"status": "error", "detail": "Failed to process ATLAS FP results"},
+                            status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+
+        return Response({"status": "ok"})
+
+    @staticmethod
+    def process_atlas_fp_results(task_url, target, data_product_type):
+        headers = {"Authorization": f"Token {settings.SINGLE_TARGET_DATA_SERVICES.get('ATLAS', {}).get('api_key')}",
+                   "Accept": "application/json"}
+
+        result_url = None
+        taskstarted_printed = False
+        while not result_url:
+            with requests.Session() as s:
+                resp = s.get(task_url, headers=headers)
+
+                if resp.status_code == 200:
+                    if resp.json()["finishtimestamp"]:
+                        if resp.json()["error_msg"] == "No data returned":
+                            logger.debug(f"No data returned for task {task_url}")
+                            return False
+                        result_url = resp.json()["result_url"]  # PART WHEN QUERY IS COMPLETE
+                        logger.debug(f"Task is complete with results available at {result_url}")
+                    elif resp.json()["starttimestamp"]:
+                        if not taskstarted_printed:
+                            logger.debug(f"Task is running (started at {resp.json()['starttimestamp']})")
+                            taskstarted_printed = True
+                        time.sleep(2)
+                    else:
+                        logger.debug(f"Waiting for job to start (queued at {resp.json()['timestamp']})")
+                        time.sleep(4)
+                else:
+                    logger.error(f"Failed to retrieve Atlas task status: HTTP Error {resp.status_code} - {resp.text}")
+                    return False
+
+        results = requests.get(result_url, headers=headers)
+        dp_name = f"atlas_{urlparse(result_url)[2].rpartition('/')[2]}"
+        file = ContentFile(results.content, name=dp_name)
+
+        dp = DataProduct.objects.create(
+            product_id=dp_name,
+            target=target,
+            data=file,
+            data_product_type=data_product_type,
+            extra_data=f'Queried from Atlas within the TOM on {timezone.now().isoformat()}'
+        )
+        logger.info(f"Created dataproduct {dp_name} from atlas query")
+
+        try:
+            run_data_processor(dp)
+        except InvalidFileFormatException as e:
+            logger.error(f"Error processing returned Atlas data into ReducedDatums: {repr(e)}")
+            return False
+
+        return True

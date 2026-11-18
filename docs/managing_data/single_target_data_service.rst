@@ -87,6 +87,32 @@ Atlas and ZTF, should start querying asynchronously. (Note: You must also start 
 back to synchronous queries.
 
 
+Configuring ATLAS to use a callback URL:
+****************************************
+The ATLAS forced-photometry service can be time consuming, so when this query happens it can clog up your database
+workers while they wait for ATLAS to finish, preventing them from processing new targets. This can be especially
+problematic and time consuming if you are trying to ingest and process  many targets at once. Luckily, ATLAS provides
+a `callback URL feature <https://fallingstar-data.com/forcedphot/apiguide/>`_ functionality. This allows users to
+submit a URL that ATLAS will post to when it finishes processing the forced photometry job, processing the request
+asynchronously on the ATLAS server side, rather than in your TOM. To use this feature in your TOM, add the
+``callback_url`` key to ``SINGLE_TARGET_DATA_SERVICES.ATLAS``:  
+
+.. code:: python
+
+    SINGLE_TARGET_DATA_SERVICES = {
+        'ATLAS': {
+            'class': 'tom_dataproducts.single_target_data_service.atlas.AtlasForcedPhotometryService',
+            'url': "https://fallingstar-data.com/forcedphot",
+            'api_key': os.getenv('ATLAS_FORCED_PHOTOMETRY_API_KEY', 'your atlas account api token'),
+	    'callback_url': "https://your-tom-base-url.com/dataproducts/api/atlas_processor/"
+        },
+	...
+    }
+
+where you will need to replace "your-tom-base-url.com" with the base url for your TOMToolkit app. This callback URL
+points to an API post endpoint that will fetch the ATLAS forced photometry results and process them asynchronously,
+without clogging up your database workers.
+
 Adding a new Single-Target Data Service
 #######################################
 

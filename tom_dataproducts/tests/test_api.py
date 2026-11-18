@@ -1,12 +1,17 @@
+from unittest.mock import patch, MagicMock
+
 from tom_targets.base_models import get_target_model_app_label
 from django.contrib.auth.models import Group, User
 
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import override_settings
 from django.urls import reverse
 from guardian.shortcuts import assign_perm
 from rest_framework import status
 from rest_framework.test import APITestCase
 
+from tom_dataproducts.api_views import ATLASProcessorView
+from tom_dataproducts.tasks import trigger_atlas_fp
 from tom_dataproducts.models import (
     AstrometryReducedDatum,
     DataProduct,
@@ -383,3 +388,129 @@ class TestReducedDatumViewset(APITestCase):
         self.assertEqual(result['data_type'], 'photometry')
         self.assertEqual(result['value']['brightness'], 15.582)
         self.assertEqual(result['value']['bandpass'], 'r')
+
+
+# a TOM using ATLAS must register the atlas_photometry type and processor in its settings
+@override_settings(SINGLE_TARGET_DATA_SERVICES={'ATLAS': {'url': 'https://atlas.example', 'api_key': 'abc'}},
+                   DATA_PROCESSORS={'atlas_photometry': 'tom_dataproducts.processors.atlas_processor.AtlasProcessor'})
+@patch('tom_dataproducts.models.DATA_TYPE_CHOICES', [('atlas_photometry', 'Atlas Photometry')])
+class TestATLASProcessorView(APITestCase):
+    task_url = 'https://atlas.example/queue/123/'
+    result_url = 'https://atlas.example/static/results/job123.txt'
+
+    def setUp(self):
+        # coordinates match the rows in test_atlas_fp.csv
+        self.target = SiderealTargetFactory.create(ra=65.00165, dec=-54.93795)
+        with open('tom_dataproducts/tests/test_data/test_atlas_fp.csv', 'rb') as atlas_fp_file:
+            self.atlas_fp_content = atlas_fp_file.read()
+        self.url = reverse('dataproducts:atlas-processor') + f'?target_id={self.target.pk}'
+
+    def mock_task_status(self, mock_session_get, error_msg=None):
+        mock_session_get.return_value = MagicMock(status_code=200, json=lambda: {
+            'finishtimestamp': '2024-01-01T00:00:00Z', 'error_msg': error_msg, 'result_url': self.result_url
+        })
+
+    def mock_result(self, mock_get):
+        mock_get.return_value = MagicMock(content=self.atlas_fp_content, text=self.atlas_fp_content.decode())
+
+    @patch('tom_dataproducts.api_views.requests.get')
+    @patch('tom_dataproducts.api_views.requests.Session.get')
+    def test_success_creates_dataproduct_and_reduced_data(self, mock_session_get, mock_get):
+        self.mock_task_status(mock_session_get)
+        self.mock_result(mock_get)
+
+        # client is not logged in: ATLAS calls this endpoint without credentials
+        response = self.client.post(self.url, {'task_url': self.task_url, 'success': True}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        mock_session_get.assert_called_once()
+        self.assertEqual(mock_session_get.call_args.args[0], self.task_url)
+        dp = DataProduct.objects.get()
+        self.assertEqual(dp.product_id, 'atlas_job123.txt')
+        self.assertEqual(dp.data_product_type, 'atlas_photometry')
+        self.assertEqual(dp.target, self.target)
+        self.assertGreater(PhotometryReducedDatum.objects.filter(target=self.target).count(), 0)
+
+    @patch('tom_dataproducts.api_views.requests.get')
+    @patch('tom_dataproducts.api_views.requests.Session.get')
+    def test_failure_payload_returns_400(self, mock_session_get, mock_get):
+        response = self.client.post(self.url, {'task_url': self.task_url, 'success': False, 'error_msg': 'boom'},
+                                    format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        mock_session_get.assert_not_called()
+        mock_get.assert_not_called()
+        self.assertEqual(DataProduct.objects.count(), 0)
+
+    def test_invalid_payload_returns_400(self):
+        response = self.client.post(self.url, {'success': True}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('task_url', response.data)
+
+    @patch('tom_dataproducts.api_views.requests.get')
+    @patch('tom_dataproducts.api_views.requests.Session.get')
+    def test_missing_or_unknown_target_id(self, mock_session_get, mock_get):
+        base_url = reverse('dataproducts:atlas-processor')
+        payload = {'task_url': self.task_url, 'success': True}
+
+        for url, expected_status in [(base_url, status.HTTP_400_BAD_REQUEST),
+                                     (base_url + '?target_id=abc', status.HTTP_400_BAD_REQUEST),
+                                     (base_url + '?target_id=999999', status.HTTP_404_NOT_FOUND)]:
+            with self.subTest(url=url):
+                response = self.client.post(url, payload, format='json')
+                self.assertEqual(response.status_code, expected_status)
+
+        mock_session_get.assert_not_called()
+        mock_get.assert_not_called()
+        self.assertEqual(DataProduct.objects.count(), 0)
+
+    @patch('tom_dataproducts.api_views.requests.get')
+    @patch('tom_dataproducts.api_views.requests.Session.get')
+    def test_target_id_used_instead_of_coordinates(self, mock_session_get, mock_get):
+        """Data attaches to the target named in the callback url, even if its coordinates don't match."""
+        self.mock_task_status(mock_session_get)
+        self.mock_result(mock_get)
+        other_target = SiderealTargetFactory.create(ra=180.0, dec=30.0)
+        url = reverse('dataproducts:atlas-processor') + f'?target_id={other_target.pk}'
+
+        response = self.client.post(url, {'task_url': self.task_url, 'success': True}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(DataProduct.objects.get().target, other_target)
+
+    @patch('tom_dataproducts.api_views.requests.get')
+    @patch('tom_dataproducts.api_views.requests.Session.get')
+    def test_no_data_returned(self, mock_session_get, mock_get):
+        self.mock_task_status(mock_session_get, error_msg='No data returned')
+
+        response = self.client.post(self.url, {'task_url': self.task_url, 'success': True}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY)
+        mock_get.assert_not_called()
+        self.assertEqual(DataProduct.objects.count(), 0)
+
+    @patch('tom_dataproducts.api_views.requests.get')
+    @patch('tom_dataproducts.api_views.requests.Session.get')
+    def test_process_results_with_explicit_target(self, mock_session_get, mock_get):
+        """The non-callback path used by tasks._atlas_query passes the target in directly."""
+        self.mock_task_status(mock_session_get)
+        self.mock_result(mock_get)
+        other_target = SiderealTargetFactory.create(ra=180.0, dec=30.0)
+
+        self.assertTrue(ATLASProcessorView.process_atlas_fp_results(self.task_url, other_target, 'atlas_photometry'))
+        self.assertEqual(DataProduct.objects.get().target, other_target)
+
+
+@override_settings(SINGLE_TARGET_DATA_SERVICES={'ATLAS': {
+    'url': 'https://atlas.example', 'api_key': 'abc',
+    'callback_url': 'https://tom.example/dataproducts/api/atlas_processor/'}})
+class TestTriggerAtlasFP(APITestCase):
+    @patch('tom_dataproducts.tasks.requests.Session.post')
+    def test_callback_url_includes_target_id(self, mock_post):
+        target = SiderealTargetFactory.create()
+        mock_post.return_value = MagicMock(status_code=201, json=lambda: {'url': 'https://atlas.example/queue/1/'})
+
+        self.assertTrue(trigger_atlas_fp(60000, None, target.pk, 'atlas_photometry'))
+        self.assertEqual(mock_post.call_args.kwargs['data']['callback_url'],
+                         f'https://tom.example/dataproducts/api/atlas_processor/?target_id={target.pk}')
