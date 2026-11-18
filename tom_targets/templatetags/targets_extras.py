@@ -10,6 +10,7 @@ from astropy.time import Time
 from django import template
 from django.core.exceptions import FieldDoesNotExist
 from django.utils.safestring import mark_safe
+from django.utils.text import slugify
 from django.conf import settings
 from django.db.models import Q
 from django.apps import apps
@@ -96,7 +97,7 @@ def target_data(target):
 @register.inclusion_tag('tom_targets/partials/target_unknown_statuses.html')
 def target_unknown_statuses(target):
     return {
-        'num_unknown_statuses': len(target.observationrecord_set.filter(Q(status='') | Q(status=None)))
+        'num_unknown_statuses': target.observationrecord_set.filter(Q(status='') | Q(status=None)).count()
     }
 
 
@@ -541,7 +542,7 @@ def extra_form_field(form, field):
     return form[field]
 
 
-def get_app_tabs(context):
+def get_app_tabs(context, load_context=True):
     """
     Imports the target detail tab content from relevant apps into the template.
 
@@ -564,7 +565,7 @@ def get_app_tabs(context):
         if target_tabs:
             for tab in target_tabs:
                 new_context = {}
-                if tab.get('context'):
+                if tab.get('context') and load_context:
                     try:
                         context_method = import_string(tab.get('context'))
                     except ImportError as e:
@@ -575,17 +576,22 @@ def get_app_tabs(context):
                     new_context = context_method(context)
                 target_tabs_to_display.append({'partial': tab['partial'],
                                                'context': new_context,
-                                               'label': tab['label']})
+                                               'label': tab['label'],
+                                               'slug': slugify(tab['label'])})
     return target_tabs_to_display
 
 
 @register.inclusion_tag('tom_targets/partials/app_tab_divs.html', takes_context=True)
 def include_app_tab_divs(context):
-    context['target_tabs_to_display'] = get_app_tabs(context)
+    context['target_tabs_to_display'] = context.get('target_tabs_to_display') or get_app_tabs(
+        context, load_context=False
+    )
     return context
 
 
 @register.inclusion_tag('tom_targets/partials/app_tabs.html', takes_context=True)
 def include_app_tabs(context):
-    context['target_tabs_to_display'] = get_app_tabs(context)
+    context['target_tabs_to_display'] = context.get('target_tabs_to_display') or get_app_tabs(
+        context, load_context=False
+    )
     return context
