@@ -15,7 +15,7 @@ from django.core.management import call_command
 from django.core.paginator import Paginator
 from django.db import transaction
 from django_filters.views import FilterView
-from django.http import HttpResponse
+from django.http import Http404, HttpResponse
 from django.http import HttpResponseRedirect, QueryDict, StreamingHttpResponse
 from django.forms import HiddenInput
 from django.shortcuts import redirect, render
@@ -56,6 +56,7 @@ from tom_targets.models import Target, TargetList
 from tom_targets.persistent_sharing_serializers import PersistentShareSerializer
 from tom_targets.permissions import targets_for_user
 from tom_targets.templatetags.targets_extras import target_merge_fields, persistent_share_table
+from tom_targets.templatetags.targets_extras import get_app_tabs
 from tom_targets.utils import import_targets, export_targets
 from tom_observations.utils import get_sidereal_visibility
 from tom_targets.seed import seed_messier_targets
@@ -472,6 +473,11 @@ class TargetDetailView(DetailView):
         observation_template_form.fields['target'].widget = HiddenInput()
         context['observation_template_form'] = observation_template_form
         context['target'] = self.object
+        context['target_tabs_to_display'] = get_app_tabs(context, load_context=False)
+        available_tabs = {'observe', 'observations', 'manage-data', 'manage-groups', 'photometry', 'spectroscopy'}
+        available_tabs.update(tab['slug'] for tab in context['target_tabs_to_display'])
+        requested_tab = self.request.GET.get('tab', 'observe')
+        context['active_tab'] = requested_tab if requested_tab in available_tabs else 'observe'
         return context
 
     def get(self, request, *args, **kwargs):
@@ -516,7 +522,44 @@ def render_observation_table(request, pk):
     out = StringIO()
     call_command('updatestatus', target_id=pk, stdout=out)
     messages.info(request, out.getvalue())
-    return render(request, 'tom_targets/partials/observation_table.html', context={'object': Target.objects.get(id=pk)})
+    detail_view = TargetDetailView()
+    detail_view.setup(request, pk=pk)
+    target = detail_view.get_object()
+    return render(request, 'tom_targets/partials/observation_table.html', context={'object': target})
+
+
+def _get_target_detail_target(request, pk):
+    detail_view = TargetDetailView()
+    detail_view.setup(request, pk=pk)
+    return detail_view.get_object()
+
+
+def render_target_detail_summary(request, pk):
+    target = _get_target_detail_target(request, pk)
+    return render(request, 'tom_targets/partials/target_detail_summary.html', {
+        'object': target,
+        'target': target,
+    })
+
+
+def render_target_detail_tab(request, pk, tab):
+    detail_view = TargetDetailView()
+    detail_view.setup(request, pk=pk)
+    target = detail_view.get_object()
+    detail_view.object = target
+    built_in_tabs = {'observe', 'observations', 'manage-data', 'manage-groups', 'photometry', 'spectroscopy'}
+    app_tab = None
+    if tab not in built_in_tabs:
+        app_context = detail_view.get_context_data(object=target)
+        app_tab = next((item for item in get_app_tabs(app_context) if item['slug'] == tab), None)
+        if app_tab is None:
+            raise Http404('Unknown target detail tab')
+    return render(request, 'tom_targets/partials/target_detail_tab.html', {
+        'object': target,
+        'target': target,
+        'tab': tab,
+        'app_tab': app_tab,
+    })
 
 
 class TargetImportView(LoginRequiredMixin, TemplateView):
