@@ -1,6 +1,7 @@
 from django.urls import path
 
-from .views import TargetCreateView, TargetUpdateView, TargetDetailView, TargetNameSearchView, render_observation_table
+from .views import (TargetCreateView, TargetUpdateView, TargetDetailView, TargetNameSearchView,
+                    render_observation_table, render_target_detail_summary, render_target_detail_tab)
 from .views import TargetDeleteView, TargetListView, TargetImportView, TargetExportView, TargetShareView
 from .views import (TargetGroupingView, TargetGroupingDeleteView, TargetGroupingCreateView,
                     TargetAddRemoveGroupingView, TargetMergeView, TargetPersistentShareManageFormView,
@@ -35,6 +36,8 @@ urlpatterns = [
     path('<int:pk>/delete/', TargetDeleteView.as_view(), name='delete'),
     path('<int:pk>/share/', TargetShareView.as_view(), name='share'),
     path('<int:pk>/', TargetDetailView.as_view(), name='detail'),
+    path('<int:pk>/summary/', render_target_detail_summary, name='detail-summary'),
+    path('<int:pk>/tab/<str:tab>/', render_target_detail_tab, name='detail-tab'),
     path('<int:pk>/observation-list/', render_observation_table, name='render-observation-table'),
     path('targetgrouping/<int:pk>/delete/', TargetGroupingDeleteView.as_view(), name='delete-group'),
     path('targetgrouping/create/', TargetGroupingCreateView.as_view(), name='create-group'),
