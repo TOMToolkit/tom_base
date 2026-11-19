@@ -31,13 +31,13 @@ class SimbadDataService(DataService):
 
     def _get_simbad_instance(self, server, *args, **kwargs):
         """Initialize the SIMBAD instance
-            Only return a SIMBAD instance for a working server that responds within 5 seconds.
+            Only return a SIMBAD instance for a working server that responds within 5 seconds and can be read in 10.
         """
         if server not in SimbadDataService.simbad_instances:
             self.simbad = Simbad()
             self.simbad.server = server
             # Prevent long hangs if a server is down.
-            self.simbad._session.request = functools.partial(self.simbad._session.request, timeout=(5, None))
+            self.simbad._session.request = functools.partial(self.simbad._session.request, timeout=(5, 10))
             self.simbad.add_votable_fields('pmra', 'pmdec', 'ra', 'dec', 'main_id', 'parallax', 'distance')
             SimbadDataService.simbad_instances[server] = self.simbad
         return SimbadDataService.simbad_instances[server]
