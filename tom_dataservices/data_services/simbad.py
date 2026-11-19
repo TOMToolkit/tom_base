@@ -4,7 +4,7 @@ import functools
 
 from django import forms
 
-from tom_dataservices.dataservices import DataService
+from tom_dataservices.dataservices import DataService, QueryServiceError
 from tom_dataservices.forms import BaseQueryForm as QueryForm
 from tom_targets.models import Target, TargetName
 
@@ -31,13 +31,13 @@ class SimbadDataService(DataService):
 
     def _get_simbad_instance(self, server, *args, **kwargs):
         """Initialize the SIMBAD instance
-            Only return a SIMBAD instance for a working server that responds within 5 seconds.
+            Only return a SIMBAD instance for a working server that responds within 5 seconds and can be read in 10.
         """
         if server not in SimbadDataService.simbad_instances:
             self.simbad = Simbad()
             self.simbad.server = server
             # Prevent long hangs if a server is down.
-            self.simbad._session.request = functools.partial(self.simbad._session.request, timeout=(5, None))
+            self.simbad._session.request = functools.partial(self.simbad._session.request, timeout=(5, 10))
             self.simbad.add_votable_fields('pmra', 'pmdec', 'ra', 'dec', 'main_id', 'parallax', 'distance')
             SimbadDataService.simbad_instances[server] = self.simbad
         return SimbadDataService.simbad_instances[server]
@@ -70,16 +70,21 @@ class SimbadDataService(DataService):
         # Start with the current server, then cycle through listed servers until we find a working one.
         servers = simbad_conf.servers_list
         start = servers.index(SimbadDataService.current_server)
+        failed_servers = []
         for server in servers[start:] + servers[:start]:
             try:
                 # Simbad returns an astropy.table.Table
                 catalog_data: Table = self._get_simbad_instance(server).query_object(search_term)  # type: ignore
                 logger.debug(f'SIMBAD.query_service.catalog_data{catalog_data}')
+                SimbadDataService.current_server = server
+                break
             except (DALServiceError) as e:
+                failed_servers.append(server)
                 logger.warning(f'SIMBAD server {server} is unavailable: {e}')
                 continue
-            SimbadDataService.current_server = server
-            break
+
+        if len(failed_servers) == len(servers):
+            raise QueryServiceError(f"Error: Could not access any {self.name} servers: {failed_servers}")
 
         # astroquery <0.4.10, > 0.4.7 has issues joining the distance field, failing to find any results.
         # This workaround checks if the query result is an empty table and then tries the query a 2nd time without the
@@ -111,13 +116,15 @@ class SimbadDataService(DataService):
         """
         # do the actual SIMBAD via query_service
         target_table: Table = self.query_service(query_parameters, **kwargs)
+        targets = []
 
         # these are the fields (==table columns==dict keys) that we keep
         votable_fields = ['ra', 'dec', 'pmra', 'pmdec', 'main_id', 'mesdistance.dist', 'mesdistance.unit']
         # convert astroquery.table.Table to list of target dict (keeping only votable_fields)
-        targets: List[Dict[str, Any]] = [
-            {key: row[key] for key in votable_fields if key in target_table.colnames}
-            for row in target_table]
+        if target_table:
+            targets: List[Dict[str, Any]] = [
+                {key: row[key] for key in votable_fields if key in target_table.colnames}
+                for row in target_table]
 
         # add name and alias items to each target
         for target in targets:
