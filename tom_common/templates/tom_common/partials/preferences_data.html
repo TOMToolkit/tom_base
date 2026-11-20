@@ -7,17 +7,23 @@
     </div>
     <div class="card-body">
         <dl class="row">
-            <dt class="col-sm-6">Sidereal target table columns</dt>
+            <dt class="col-sm-6">Sidereal Table Columns</dt>
             <dd class="col-sm-6">
-                {% for value, label in sidereal_column_options %}
-                    {% if value in selected_sidereal_columns %}<div>{{ label }}</div>{% endif %}
-                {% endfor %}
+                <div class="row gx-2">
+                    {% for column in sidereal_column_columns %}
+                    <div>
+                        {% for value, label in column %}<div>{{ label }}</div>{% endfor %}
+                    </div>{% endfor %}
+                </div>
             </dd>
-            <dt class="col-sm-6">Nonsidereal target table columns</dt>
+            <dt class="col-sm-6">Nonsidereal Table Columns</dt>
             <dd class="col-sm-6">
-                {% for value, label in nonsidereal_column_options %}
-                    {% if value in selected_nonsidereal_columns %}<div>{{ label }}</div>{% endif %}
-                {% endfor %}
+                <div class="row gx-2">
+                    {% for column in nonsidereal_column_columns %}
+                    <div>
+                        {% for value, label in column %}<div>{{ label }}</div>{% endfor %}
+                    </div>{% endfor %}
+                </div>
             </dd>
         </dl>
     </div>
