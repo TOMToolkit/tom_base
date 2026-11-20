@@ -13,7 +13,7 @@ from django.db.models import Q
 
 from tom_common.accounts.email import email_is_configured
 from tom_common.accounts.requirements import AccountRequirement
-from tom_targets.column_utils import target_column_options
+from tom_targets.column_utils import get_target_list_columns, target_column_options
 from django.forms.models import model_to_dict
 from django.apps import apps
 from django.utils.module_loading import import_string
@@ -185,8 +185,10 @@ def preferences_data(user):
     return {
         'user': user,
         'preferences': preferences,
-        'selected_target_columns': preferences.target_list_columns if preferences else [],
-        'target_column_options': target_column_options(),
+        'selected_sidereal_columns': get_target_list_columns(user, 'SIDEREAL'),
+        'selected_nonsidereal_columns': get_target_list_columns(user, 'NON_SIDEREAL'),
+        'sidereal_column_options': target_column_options('SIDEREAL'),
+        'nonsidereal_column_options': target_column_options('NON_SIDEREAL'),
     }
 
 
