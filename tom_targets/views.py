@@ -80,7 +80,7 @@ class TargetListView(HTMXTableViewMixin, FilterView):
     ordering = ['-created']
 
     def get_table(self, **kwargs):
-        kwargs['visible_columns'] = get_target_list_columns(self.request.user)
+        kwargs['visible_columns'] = get_target_list_columns(self.request.user, self.get_active_target_type())
         return super().get_table(**kwargs)
 
     def get_active_target_type(self):
@@ -108,14 +108,23 @@ class TargetListView(HTMXTableViewMixin, FilterView):
         """Save the user's selected table columns and reload the target list."""
         if not request.user.is_authenticated:
             raise PermissionDenied
+        target_type = request.POST.get('type')
+        if target_type not in {target_type for target_type, _ in Target.TARGET_TYPES}:
+            target_type = Target.SIDEREAL
         selected_columns = [
             column for column in request.POST.getlist('columns')
-            if column in [*target_columns(), 'observations', 'saved_data']
+            if column in [*target_columns(target_type), 'observations', 'saved_data']
         ]
-        request.user.preferences.target_list_columns = [
-            'name', *[column for column in selected_columns if column != 'name']
-        ]
-        request.user.preferences.save(update_fields=['target_list_columns'])
+        preferences = request.user.preferences
+        current_columns = preferences.target_list_columns
+        if not isinstance(current_columns, dict):
+            current_columns = {
+                target_type_name: (current_columns or get_target_list_columns(request.user, target_type_name))
+                for target_type_name, _ in Target.TARGET_TYPES
+            }
+        current_columns[target_type] = ['name', *[column for column in selected_columns if column != 'name']]
+        preferences.target_list_columns = current_columns
+        preferences.save(update_fields=['target_list_columns'])
         request.GET = request.POST.copy()
         request.GET.pop('columns', None)
         request.GET.pop('csrfmiddlewaretoken', None)
@@ -136,9 +145,11 @@ class TargetListView(HTMXTableViewMixin, FilterView):
                                 if self.request.user.is_authenticated
                                 else TargetList.objects.none())
         context['query_string'] = self.request.META['QUERY_STRING']
-        context['target_column_options'] = target_column_options()
-        context['selected_target_columns'] = get_target_list_columns(self.request.user)
         context['active_target_type'] = self.get_active_target_type()
+        context['target_column_options'] = target_column_options(context['active_target_type'])
+        context['selected_target_columns'] = get_target_list_columns(
+            self.request.user, context['active_target_type']
+        )
 
         # Prepare list of targets for Aladin skymap (avoiding BoundRow wrappers)
         table = context['table']
