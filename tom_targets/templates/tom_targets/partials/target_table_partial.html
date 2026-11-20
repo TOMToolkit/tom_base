@@ -35,6 +35,7 @@
             <form method="post" hx-post="{% url 'tom_targets:list' %}" hx-target="div.table-container"
                   hx-swap="outerHTML" hx-include="#filter-form" hx-indicator=".progress" class="card-body">
                 {% csrf_token %}
+                <input type="hidden" name="type" value="{{ active_target_type }}">
                 <div class="row">
                     {% for value, label in target_column_options %}
                     <div class="col-md-6">
