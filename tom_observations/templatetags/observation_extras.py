@@ -1,21 +1,20 @@
-from datetime import datetime, timedelta
 import logging
+from datetime import datetime, timedelta
 from urllib.parse import urlencode
 
+import plotly.graph_objs as go
 from django import forms, template
 from django.conf import settings
 from django.urls import NoReverseMatch, reverse
 from guardian.shortcuts import get_objects_for_user
 from plotly import offline
-import plotly.graph_objs as go
 
+from tom_observations.facility import get_service_class, get_service_classes
 from tom_observations.forms import AddExistingObservationForm, UpdateObservationId
 from tom_observations.models import ObservationRecord
-from tom_observations.facility import get_service_class, get_service_classes
 from tom_observations.observation_template import ApplyObservationTemplateForm
 from tom_observations.utils import get_sidereal_visibility
 from tom_targets.models import Target
-
 
 logger = logging.getLogger(__name__)
 
@@ -160,7 +159,7 @@ def observation_plan(target, facility=None, length=2, interval=60, airmass_limit
         yaxis={'autorange': 'reversed', 'title': 'Airmass'}
     )
     visibility_graph = offline.plot(
-        go.Figure(data=plot_data, layout=layout), output_type='div', show_link=False
+        go.Figure(data=plot_data, layout=layout), output_type='div', show_link=False, include_plotlyjs=False
     )
 
     return {
@@ -297,7 +296,12 @@ def observation_distribution(observations):
             },
         }
     }
-    figure = offline.plot(go.Figure(data=data, layout=layout), output_type='div', show_link=False)
+    figure = offline.plot(
+        go.Figure(data=data, layout=layout),
+        output_type="div",
+        show_link=False,
+        include_plotlyjs=False,
+    )
     return {'figure': figure}
 
 
@@ -346,5 +350,10 @@ def facility_map(context):
             },
         }
     }
-    figure = offline.plot(go.Figure(data=data, layout=layout), output_type='div', show_link=False)
+    figure = offline.plot(
+        go.Figure(data=data, layout=layout),
+        output_type="div",
+        show_link=False,
+        include_plotlyjs=False,
+    )
     return {'figure': figure}

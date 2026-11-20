@@ -164,7 +164,7 @@ def target_plan(context, fast_render=False, width=600, height=400, background=No
             fig.update_yaxes(showgrid=grid, color=label_color, showline=True, linecolor=label_color, mirror=True)
             fig.update_xaxes(showgrid=grid, color=label_color, showline=True, linecolor=label_color, mirror=True)
             visibility_graph = offline.plot(
-                fig, output_type='div', show_link=False
+                fig, output_type='div', show_link=False, include_plotlyjs=False
             )
     return {
         'form': plan_form,
@@ -210,11 +210,9 @@ def moon_distance(target, day_range=30, width=600, height=400, background=None, 
         [str(datetime.utcnow() + timedelta(days=delta)) for delta in np.arange(0, day_range, 0.2)],
         format='iso', scale='utc'
     )
-    separations = []
-    for time in times:
-        obj_pos = SkyCoord(target.ra, target.dec, unit=u.deg, frame=GCRS(obstime=time))
-        moon_pos = get_body('moon', time)
-        separations.append(moon_pos.separation(obj_pos).deg)
+    obj_pos = SkyCoord(target.ra, target.dec, unit=u.deg, frame=GCRS(obstime=times))
+    moon_pos = get_body('moon', times)
+    separations = moon_pos.separation(obj_pos).deg
 
     phases = moon_illumination(times)
 
@@ -243,7 +241,7 @@ def moon_distance(target, day_range=30, width=600, height=400, background=None, 
     fig.update_yaxes(showgrid=grid, color=label_color, showline=True, linecolor=label_color, mirror=True)
     fig.update_xaxes(showgrid=grid, color=label_color, showline=True, linecolor=label_color, mirror=True)
     moon_distance_plot = offline.plot(
-        fig, output_type='div', show_link=False
+        fig, output_type='div', show_link=False, include_plotlyjs=False
     )
 
     return {'plot': moon_distance_plot}
