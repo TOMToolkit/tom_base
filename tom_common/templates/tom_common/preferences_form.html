@@ -10,10 +10,14 @@
     <fieldset class="mb-4">
         <legend class="form-label">{{ field.label }}</legend>
         {{ field.errors }}
-        <div class="row gx-0 w-50">
-            {% for checkbox in field %}
+        <div class="row gx-2 w-50">
+            {% for column in field.field.column_options %}
             <div class="col-md-6">
-                <div class="form-check">{{ checkbox }}</div>
+                {% for value, label in column %}
+                {% for checkbox in field %}
+                {% if checkbox.data.value == value %}<div class="form-check">{{ checkbox }}</div>{% endif %}
+                {% endfor %}
+                {% endfor %}
             </div>
             {% endfor %}
         </div>
