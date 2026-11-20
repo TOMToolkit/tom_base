@@ -23,6 +23,29 @@ body {
   color: var(--theme_text_primary);
 }
 
+.target-column-settings-card {
+  z-index: 2;
+  top: 0 !important;
+  right: auto !important;
+  bottom: auto !important;
+  left: 50%;
+  width: 24rem;
+  max-width: calc(100vw - 2rem);
+  transform: translate(-50%, calc(-100% - 0.5rem));
+}
+
+.target-column-settings {
+  position: relative;
+}
+
+.target-column-settings-card .card-body {
+  padding: 0.75rem;
+}
+
+.target-column-heading {
+  margin: 0 0 0.5rem;
+}
+
 .content {
   padding: 3rem 1.5rem;
 }
