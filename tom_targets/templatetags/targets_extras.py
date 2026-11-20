@@ -210,11 +210,9 @@ def moon_distance(target, day_range=30, width=600, height=400, background=None, 
         [str(datetime.utcnow() + timedelta(days=delta)) for delta in np.arange(0, day_range, 0.2)],
         format='iso', scale='utc'
     )
-    separations = []
-    for time in times:
-        obj_pos = SkyCoord(target.ra, target.dec, unit=u.deg, frame=GCRS(obstime=time))
-        moon_pos = get_body('moon', time)
-        separations.append(moon_pos.separation(obj_pos).deg)
+    obj_pos = SkyCoord(target.ra, target.dec, unit=u.deg, frame=GCRS(obstime=times))
+    moon_pos = get_body('moon', times)
+    separations = moon_pos.separation(obj_pos).deg
 
     phases = moon_illumination(times)
 
