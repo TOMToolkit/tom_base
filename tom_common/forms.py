@@ -54,7 +54,12 @@ UserProfileInlineFormSet = forms.inlineformset_factory(
 
 
 class PreferencesModelForm(forms.ModelForm):
-    target_list_columns = forms.MultipleChoiceField(
+    sidereal_columns = forms.MultipleChoiceField(
+        choices=(),
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+    )
+    nonsidereal_columns = forms.MultipleChoiceField(
         choices=(),
         required=False,
         widget=forms.CheckboxSelectMultiple,
@@ -62,13 +67,26 @@ class PreferencesModelForm(forms.ModelForm):
 
     class Meta:
         model = Preferences
-        fields = ('target_list_columns',)
+        fields = ()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['target_list_columns'].choices = target_column_options()
-        if self.instance.pk and self.instance.target_list_columns is None:
-            self.initial['target_list_columns'] = get_target_list_columns(self.instance.user)
+        self.fields['sidereal_columns'].label = 'Sidereal target table columns'
+        self.fields['sidereal_columns'].choices = target_column_options('SIDEREAL')
+        self.fields['nonsidereal_columns'].label = 'Nonsidereal target table columns'
+        self.fields['nonsidereal_columns'].choices = target_column_options('NON_SIDEREAL')
+        if self.instance.pk:
+            self.initial['sidereal_columns'] = get_target_list_columns(self.instance.user, 'SIDEREAL')
+            self.initial['nonsidereal_columns'] = get_target_list_columns(self.instance.user, 'NON_SIDEREAL')
+
+    def save(self, commit=True):
+        self.instance.target_list_columns = {
+            'SIDEREAL': ['name', *[column for column in self.cleaned_data['sidereal_columns'] if column != 'name']],
+            'NON_SIDEREAL': [
+                'name', *[column for column in self.cleaned_data['nonsidereal_columns'] if column != 'name']
+            ],
+        }
+        return super().save(commit=commit)
 
 
 class CustomUserCreationForm(UserCreationForm):
