@@ -53,7 +53,7 @@ jobs:
           poetry install  --with test,coverage,lint
       - name: Run Tests
         run: |
-          poetry run python manage.py test --exclude-tag=canary
+          poetry run python manage.py test --settings=test_settings --exclude-tag=canary --parallel --verbosity=0
 
   publish_coverage:
     runs-on: ubuntu-latest
@@ -68,7 +68,7 @@ jobs:
           python -m pip install "poetry>=2.0,<3.0"
           poetry install --with test,coverage,lint
       - name: Run Tests
-        run: poetry run coverage run --include=tom_* manage.py test --exclude-tag=canary
+        run: poetry run coverage run --include=tom_* manage.py test --settings=test_settings --exclude-tag=canary --parallel --verbosity=0
       - name: Report Coverage
         run: poetry run coveralls
         env:

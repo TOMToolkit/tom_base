@@ -117,6 +117,10 @@ for development. For production, point Django's SMTP backend (the default) at yo
 say who your TOM's mail comes from (`DEFAULT_FROM_EMAIL`) and who receives registration
 requests (`MANAGERS`)::
 
+    # Switch the email backend to "smtp" rather than console output
+    # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
     # from your email provider
     EMAIL_HOST = 'smtp.example.org'  # your institution's or provider's SMTP relay
     EMAIL_PORT = 587
@@ -130,6 +134,37 @@ requests (`MANAGERS`)::
 The host, port, credentials and TLS mode come from your email provider. See Django's
 `email settings reference <https://docs.djangoproject.com/en/5.2/ref/settings/#email-backend>`_
 for details on individual setttings.
+
+Note that the email backend that was configured earlier to send output to the console should now be configured
+to output to an SMTP server with the setting.  This can be done simply by commenting out the console backend
+configuration, since SMTP is Django's default.  If you want to set this explicitly you can use the following::
+
+    #EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+The ``EMAIL_HOST_PASSWORD`` *isn't* the usual login password to your email account, but rather an app password
+specifically created by your email service provider to allow software to send email.  Since this provides another
+login route to your account, your email provider may require that your account has other security features active, such as
+Multi-Factor Authentication.  Some IT administrators deactivate this function.
+
+The process for obtaining an app password for an email account varies by provider, but here is an example based on
+Google's Gmail service.
+
+1.) Go to `Google's Account Security Settings <https://support.google.com/mail/answer/185833?hl=en>`_
+
+2.) Switch on 2-factor verification and follow the prompts to set it up
+
+3.) Toggle 2-factor verification to ``on``.
+
+4.) Go to `Google's App Passwords Page <https://myaccount.google.com/apppasswords>`_
+
+5.) Under `Select App` enter the name of your TOM system.
+
+6.) Google will give you a 16-digit code - this is your app password.  Treat it as you would any other password
+and keep it private.  We recommend that you set this as an environment variable rather than directly in the
+``settings.py`` to avoid the risk of accidently commiting it to a public repository.
+
+Note that the spaces should not be included in the ``EMAIL_HOST_PASSWORD`` setting.
 
 .. _verifying-your-configuration:
 
@@ -147,14 +182,26 @@ prints each received message to its terminal. To run it, in a terminal type::
 
     python -m aiosmtpd -n -l localhost:8025
 
-Configure your ``settings.py`` to point at it (``EMAIL_HOST = 'localhost'``, ``EMAIL_PORT = 8025``),
-and ``sendtestemail`` output should appear in the (`aiosmtpd`) terminal.
+Update the following configurations in your ``settings.py`` to point to the local test server::
+
+    EMAIL_HOST = 'localhost'
+    EMAIL_PORT = 8025
+    EMAIL_USE_TLS = False
+
+Note that ``aiosmtpd`` doesn't support TLS (Transport Layer Security) since it isn't intended as a full mail service.
+So this needs to be set to ``False`` for testing purposes - don't forget to switch this back to ``True`` for production.
+
+You can now test that the TOM is sending mail through the mail server by running::
+
+    ./manage.py sendtestemail you@example.org
+
+This time the output should appear in the (`aiosmtpd`) terminal.
 
 -------------------------------------------------------------------
 What happens when email is not configured or  when sends fail
 -------------------------------------------------------------------
 
-Your TOM's Email configuration can be verifiied in code and at the command line:
+Your TOM's Email configuration can be verified in code and at the command line:
 
 - TOM Toolkit determines whether email is configured using
   ``tom_common.accounts.email.email_is_configured``
@@ -172,10 +219,23 @@ When sending email fails, feedback is given in the UI and logs:
 Customizing the emails
 ------------------------
 
-Each email is composed from  a pair of templates (``*_subject.txt`` and ``*_message.txt``). The
-templates can be customized (overridden) by placing your own copy in your TOM's
-``templates/`` directory (sibling to ``manage.py``).
-The sender address is set by ``DEFAULT_FROM_EMAIL``.
+Each email is composed from a pair of templates files, one for the subject line (``*_subject.txt``) and
+one for the message body (``*_message.txt``).  The asterisk represents the action on which
+that email is sent, for example the templates for requesting and approving a registration
+are named:
+
+..code:
+  registration_requested_subject.txt
+  registration_requested_message.txt
+  registration_approved_subject.txt
+  registration_approved_message.txt
+
+The TOM's default messages and subjects can be found in
+`/tom_base/tom_common/templates/account/email <https://github.com/TOMToolkit/tom_base/tree/dev/tom_common/templates/account/email>`_
+
+If you prefer to customize these emails, you can easily override the TOM's defaults by copying
+the TOM templates into your own top-level ``templates/tom_common/account/email`` directory (sibling to ``manage.py``),
+and editing them as you wish.  The sender address is set by ``DEFAULT_FROM_EMAIL``.
 
 - **Registration request** email goes to the addresses in ``MANAGERS``. The default templates are
   set by TOM Toolkit. To customize, put your overriding templates in
