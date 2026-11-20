@@ -7,16 +7,17 @@
     </div>
     <div class="card-body">
         <dl class="row">
-            <dt class="col-sm-6">Target list columns</dt>
+            <dt class="col-sm-6">Sidereal target table columns</dt>
             <dd class="col-sm-6">
-                {% for value, label in target_column_options %}
-                    {% if value in selected_target_columns %}
-                        <div>{{ label }}</div>
-                    {% endif %}
+                {% for value, label in sidereal_column_options %}
+                    {% if value in selected_sidereal_columns %}<div>{{ label }}</div>{% endif %}
                 {% endfor %}
-                {% if not selected_target_columns %}
-                    <div>No preferences selected.</div>
-                {% endif %}
+            </dd>
+            <dt class="col-sm-6">Nonsidereal target table columns</dt>
+            <dd class="col-sm-6">
+                {% for value, label in nonsidereal_column_options %}
+                    {% if value in selected_nonsidereal_columns %}<div>{{ label }}</div>{% endif %}
+                {% endfor %}
             </dd>
         </dl>
     </div>
