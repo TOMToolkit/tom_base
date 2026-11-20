@@ -164,7 +164,7 @@ def target_plan(context, fast_render=False, width=600, height=400, background=No
             fig.update_yaxes(showgrid=grid, color=label_color, showline=True, linecolor=label_color, mirror=True)
             fig.update_xaxes(showgrid=grid, color=label_color, showline=True, linecolor=label_color, mirror=True)
             visibility_graph = offline.plot(
-                fig, output_type='div', show_link=False
+                fig, output_type='div', show_link=False, include_plotlyjs=False
             )
     return {
         'form': plan_form,
@@ -241,7 +241,7 @@ def moon_distance(target, day_range=30, width=600, height=400, background=None, 
     fig.update_yaxes(showgrid=grid, color=label_color, showline=True, linecolor=label_color, mirror=True)
     fig.update_xaxes(showgrid=grid, color=label_color, showline=True, linecolor=label_color, mirror=True)
     moon_distance_plot = offline.plot(
-        fig, output_type='div', show_link=False
+        fig, output_type='div', show_link=False, include_plotlyjs=False
     )
 
     return {'plot': moon_distance_plot}

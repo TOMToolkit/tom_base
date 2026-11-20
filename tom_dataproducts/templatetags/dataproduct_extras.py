@@ -1,26 +1,31 @@
+import base64
 import logging
 from collections import defaultdict
+from datetime import datetime, timedelta
+from io import BytesIO
 
-from django import template
-from django import forms
+import numpy as np
+import plotly.graph_objs as go
+from django import forms, template
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.paginator import Paginator
 from django.shortcuts import reverse
 from django.utils import timezone
-from datetime import datetime, timedelta
 from guardian.shortcuts import get_objects_for_user
-from plotly import offline
-import plotly.graph_objs as go
-from io import BytesIO
 from PIL import Image, ImageDraw
-import base64
-import numpy as np
+from plotly import offline
 
 from tom_dataproducts.forms import DataProductUploadForm, DataShareForm
-from tom_dataproducts.models import DataProduct, PhotometryReducedDatum, SpectroscopyReducedDatum
-from tom_dataproducts.single_target_data_service.single_target_data_service import get_service_classes, \
-    get_service_class
+from tom_dataproducts.models import (
+    DataProduct,
+    PhotometryReducedDatum,
+    SpectroscopyReducedDatum,
+)
+from tom_dataproducts.single_target_data_service.single_target_data_service import (
+    get_service_class,
+    get_service_classes,
+)
 from tom_observations.models import ObservationRecord
 from tom_targets.models import Target
 
@@ -341,7 +346,7 @@ def photometry_for_target(context, target, width=700, height=600, background=Non
 
     return {
         'target': target,
-        'plot': offline.plot(fig, output_type='div', show_link=False),
+        'plot': offline.plot(fig, output_type='div', show_link=False, include_plotlyjs=False),
     }
 
 
@@ -380,8 +385,13 @@ def spectroscopy_for_target(context, target, dataproduct=None):
         )
     )
     return {
-        'target': target,
-        'plot': offline.plot(go.Figure(data=plot_data, layout=layout), output_type='div', show_link=False)
+        "target": target,
+        "plot": offline.plot(
+            go.Figure(data=plot_data, layout=layout),
+            output_type="div",
+            show_link=False,
+            include_plotlyjs=False,
+        ),
     }
 
 

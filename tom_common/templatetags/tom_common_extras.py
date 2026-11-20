@@ -10,12 +10,18 @@ from django.apps import apps
 from django.core.exceptions import FieldDoesNotExist
 from guardian.shortcuts import get_objects_for_user
 from django.utils.module_loading import import_string
+from plotly.offline import get_plotlyjs_version
 
 from tom_targets.models import Target
 
 logger = logging.getLogger(__name__)
 
 register = template.Library()
+
+
+@register.simple_tag
+def plotly_js_url():
+    return f'https://cdn.plot.ly/plotly-{get_plotlyjs_version()}.min.js'
 
 
 @register.inclusion_tag('tom_common/partials/navbar_app_addons.html', takes_context=True)
