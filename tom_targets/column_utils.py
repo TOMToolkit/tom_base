@@ -59,3 +59,14 @@ def target_column_options(target_type=None):
         for column in available_columns
         if column != 'name'
     ]
+
+
+def split_column_options(options):
+    """Split options into two ordered columns, filling the first column first."""
+    midpoint = (len(options) + 1) // 2
+    return [options[:midpoint], options[midpoint:]]
+
+
+def target_column_option_columns(target_type=None):
+    """Return target column options arranged for top-to-bottom, two-column display."""
+    return split_column_options(target_column_options(target_type))
