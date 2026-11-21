@@ -1,0 +1,30 @@
+<div class="card">
+    <div class="card-header">
+        <div style="display: flex; justify-content: space-between">
+            <h4 class="card-title">Display Preferences</h4>
+            <a title="Edit" href="{% url 'user-preferences-update' %}"><i class="fa fa-pencil" aria-hidden="true"></i></a>
+        </div>
+    </div>
+    <div class="card-body">
+        <dl class="row">
+            <dt class="col-sm-6">Sidereal Table Columns</dt>
+            <dd class="col-sm-6">
+                <div class="row gx-2">
+                    {% for column in sidereal_column_columns %}
+                    <div>
+                        {% for value, label in column %}<div>{{ label }}</div>{% endfor %}
+                    </div>{% endfor %}
+                </div>
+            </dd>
+            <dt class="col-sm-6">Nonsidereal Table Columns</dt>
+            <dd class="col-sm-6">
+                <div class="row gx-2">
+                    {% for column in nonsidereal_column_columns %}
+                    <div>
+                        {% for value, label in column %}<div>{{ label }}</div>{% endfor %}
+                    </div>{% endfor %}
+                </div>
+            </dd>
+        </dl>
+    </div>
+</div>

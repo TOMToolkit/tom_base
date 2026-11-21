@@ -5,7 +5,8 @@ from django.contrib.auth.models import User, Group
 from django.db import transaction
 from crispy_forms.helper import FormHelper
 
-from tom_common.models import Profile
+from tom_common.models import Profile, Preferences
+from tom_targets.column_utils import get_target_list_columns, target_column_option_columns, target_column_options
 
 # UserCreationForm was changed for django 4.2 to not allow new users to have case-sensitive variations in
 # existing usernames. This check breaks our username update process because we use the UserCreationForm rather
@@ -50,6 +51,44 @@ UserProfileInlineFormSet = forms.inlineformset_factory(
     can_delete=False,
     can_order=False,
     )
+
+
+class PreferencesModelForm(forms.ModelForm):
+    sidereal_columns = forms.MultipleChoiceField(
+        choices=(),
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+    )
+    nonsidereal_columns = forms.MultipleChoiceField(
+        choices=(),
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+    )
+
+    class Meta:
+        model = Preferences
+        fields = ()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['sidereal_columns'].label = 'Sidereal Table Columns'
+        self.fields['sidereal_columns'].choices = target_column_options('SIDEREAL')
+        self.fields['sidereal_columns'].column_options = target_column_option_columns('SIDEREAL')
+        self.fields['nonsidereal_columns'].label = 'Nonsidereal table columns'
+        self.fields['nonsidereal_columns'].choices = target_column_options('NON_SIDEREAL')
+        self.fields['nonsidereal_columns'].column_options = target_column_option_columns('NON_SIDEREAL')
+        if self.instance.pk:
+            self.initial['sidereal_columns'] = get_target_list_columns(self.instance.user, 'SIDEREAL')
+            self.initial['nonsidereal_columns'] = get_target_list_columns(self.instance.user, 'NON_SIDEREAL')
+
+    def save(self, commit=True):
+        self.instance.target_list_columns = {
+            'SIDEREAL': ['name', *[column for column in self.cleaned_data['sidereal_columns'] if column != 'name']],
+            'NON_SIDEREAL': [
+                'name', *[column for column in self.cleaned_data['nonsidereal_columns'] if column != 'name']
+            ],
+        }
+        return super().save(commit=commit)
 
 
 class CustomUserCreationForm(UserCreationForm):

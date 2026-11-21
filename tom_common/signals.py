@@ -12,7 +12,7 @@ from django.utils import timezone
 
 from rest_framework.authtoken.models import Token
 
-from tom_common.models import Profile
+from tom_common.models import Preferences, Profile
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -51,12 +51,14 @@ def save_profile_on_user_post_save(sender, instance, created, **kwargs) -> None:
         except User.profile.RelatedObjectDoesNotExist:  # type: ignore[attr-defined]
             logger.info(f'No Profile found for {instance}. Creating Profile.')
             Profile.objects.create(user=instance)
+        Preferences.objects.get_or_create(user=instance)
         return
 
     # Non-creation save: just backfill a Profile if (somehow) missing.
     if not Profile.objects.filter(user=instance).exists():
         logger.info(f'No Profile found for {instance}. Creating Profile.')
         Profile.objects.create(user=instance)
+    Preferences.objects.get_or_create(user=instance)
 
 
 # Signal: Create a DRF token for the User when the User instance is created

@@ -24,7 +24,7 @@
           <input type="checkbox" name="selected-target" value="{{ target.id }}" onClick="single_select()" form="grouping-form"/>
         {% endif %}
       </td>
-      {% target_table_row target as target_row %}
+      {% target_table_row target columns as target_row %}
       {% for target_col in target_row %}
         <td>
         {% if forloop.first %}

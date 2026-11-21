@@ -43,5 +43,7 @@ class TomCommonConfig(AppConfig):
         """
         return [{'partial': 'tom_common/partials/user_data.html',
                  'context': 'tom_common.templatetags.user_extras.user_data'},
+                {'partial': 'tom_common/partials/preferences_data.html',
+                 'context': 'tom_common.templatetags.user_extras.preferences_data'},
                 {'partial': 'tom_common/partials/security_card.html',
                  'context': 'tom_common.templatetags.user_extras.security_card'}]

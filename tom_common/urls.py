@@ -28,7 +28,10 @@ from tom_common.accounts.urlpatterns import allauth_urlpatterns
 from tom_common.accounts.views import TermsAcceptView, TermsOfServiceView, UserApprovalView
 from tom_common.api_views import GroupViewSet
 from tom_common.views import UserListView, UserPasswordChangeView, UserCreateView, UserDeleteView, UserUpdateView
-from tom_common.views import CommentDeleteView, GroupCreateView, GroupUpdateView, GroupDeleteView, UserProfileView
+from tom_common.views import (
+    CommentDeleteView, GroupCreateView, GroupUpdateView, GroupDeleteView,
+    UserProfileView, UserPreferencesUpdateView,
+)
 from tom_common.views import RegenerateAPITokenView
 from tom_common.views import robots_txt
 
@@ -73,6 +76,7 @@ urlpatterns += [
     path('users/<int:pk>/update/', UserUpdateView.as_view(), name='user-update'),
     path('users/<int:pk>/regenerate-token/', RegenerateAPITokenView.as_view(), name='regenerate-api-token'),
     path('users/profile/', UserProfileView.as_view(), name='user-profile'),
+    path('users/profile/preferences/', UserPreferencesUpdateView.as_view(), name='user-preferences-update'),
     path('groups/create/', GroupCreateView.as_view(), name='group-create'),
     path('groups/<int:pk>/update/', GroupUpdateView.as_view(), name='group-update'),
     path('groups/<int:pk>/delete/', GroupDeleteView.as_view(), name='group-delete'),

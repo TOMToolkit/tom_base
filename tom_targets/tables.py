@@ -2,6 +2,7 @@ import logging
 
 import django_tables2 as tables
 
+from tom_targets.column_utils import get_target_list_columns, target_columns
 from django.utils.html import format_html
 from django.urls import reverse
 
@@ -58,9 +59,25 @@ class TargetTable(HTMXTable):
         attrs={"a": {"hx-boost": "false"}}
     )
 
+    observations = tables.Column('Observations', accessor='pk', orderable=False)
+    saved_data = tables.Column('Saved Data', accessor='pk', orderable=False)
+
+    def __init__(self, *args, visible_columns=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        visible_columns = get_target_list_columns() if visible_columns is None else visible_columns
+        for column in self.columns.names():
+            if column != 'selection' and column not in visible_columns:
+                self.columns.hide(column)
+
+    def render_observations(self, value, record):
+        return record.observationrecord_set.count()
+
+    def render_saved_data(self, value, record):
+        return record.dataproduct_set.count()
+
     class Meta(HTMXTable.Meta):
         model = Target
-        fields = ['selection', 'name', 'type', 'ra', 'dec', ]
+        fields = ['selection', *target_columns(), 'observations', 'saved_data']
 
     # Override to use Target-specific partial
     partial_template_name = "tom_targets/partials/target_table_partial.html"
