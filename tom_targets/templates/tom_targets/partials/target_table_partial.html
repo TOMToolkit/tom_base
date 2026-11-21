@@ -27,24 +27,30 @@
     </ul>
 
     {% if request.user.is_authenticated %}
-    <details>
+    <details class="target-column-settings" style="position: relative;">
         <summary class="btn btn-outline-secondary">
             <i class="fa fa-cog" aria-hidden="true"></i> Table Settings
         </summary>
-        <div class="card mt-2 position-absolute end-0" style="z-index: 2; min-width: 32rem;">
+        <div class="card target-column-settings-card" role="dialog" aria-label="Table column settings"
+             style="position: absolute !important; top: 0 !important; right: auto !important; bottom: auto !important; left: 50% !important; width: 24rem; max-width: calc(100vw - 2rem); transform: translate(-50%, calc(-100% - 0.5rem)) !important; z-index: 2;">
             <form method="post" hx-post="{% url 'tom_targets:list' %}" hx-target="div.table-container"
                   hx-swap="outerHTML" hx-include="#filter-form" hx-indicator=".progress" class="card-body">
                 {% csrf_token %}
                 <input type="hidden" name="type" value="{{ active_target_type }}">
-                <div class="row">
-                    {% for value, label in target_column_options %}
-                    <div class="col-md-6">
+                <h6 class="target-column-heading">
+                    {% if active_target_type == 'SIDEREAL' %}Sidereal Table Columns{% else %}Nonsidereal table columns{% endif %}
+                </h6>
+                <div class="row gx-2">
+                    {% for column in target_column_option_columns %}
+                    <div class="col-6">
+                        {% for value, label in column %}
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" name="columns" value="{{ value }}"
                                    id="target-column-{{ value }}"
                                    {% if value in selected_target_columns %}checked{% endif %}>
                             <label class="form-check-label" for="target-column-{{ value }}">{{ label }}</label>
                         </div>
+                        {% endfor %}
                     </div>
                     {% endfor %}
                 </div>
