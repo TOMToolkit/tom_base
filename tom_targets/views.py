@@ -60,7 +60,7 @@ from tom_targets.utils import import_targets, export_targets
 from tom_observations.utils import get_sidereal_visibility
 from tom_targets.seed import seed_messier_targets
 from tom_targets.tables import TargetTable, TargetGroupTable
-from tom_targets.column_utils import get_target_list_columns, target_column_options, target_columns
+from tom_targets.column_utils import get_target_list_columns, target_column_option_columns, target_columns
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -146,7 +146,7 @@ class TargetListView(HTMXTableViewMixin, FilterView):
                                 else TargetList.objects.none())
         context['query_string'] = self.request.META['QUERY_STRING']
         context['active_target_type'] = self.get_active_target_type()
-        context['target_column_options'] = target_column_options(context['active_target_type'])
+        context['target_column_option_columns'] = target_column_option_columns(context['active_target_type'])
         context['selected_target_columns'] = get_target_list_columns(
             self.request.user, context['active_target_type']
         )
